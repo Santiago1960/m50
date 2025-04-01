@@ -129,7 +129,17 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
                       decoration: const InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)), // ← redondeado
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
                         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                       ),
                       onChanged: (value) {
@@ -156,7 +166,17 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
                       decoration: const InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)), // ← redondeado
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
                         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                       ),
                       items: apertures.map((ap) {

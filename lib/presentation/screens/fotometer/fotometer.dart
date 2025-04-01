@@ -125,7 +125,6 @@ class _FotometerScreenState extends State<FotometerScreen> {
   Widget build(BuildContext context) {
     final luxText = _lux != null ? _lux!.toStringAsFixed(2) : '--';
     final evText = _ev != null ? _ev!.toStringAsFixed(2) : '--';
-    final evSetText = _evSet != null ? _evSet!.toStringAsFixed(2) : '--';
 
     ExposurePreset? preset;
       double? evConfig;
