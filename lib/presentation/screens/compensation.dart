@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../widgets/pickers/widgets.dart';
@@ -11,20 +13,44 @@ class CompensationScreen extends StatefulWidget {
 
 class _CompensationScreenState extends State<CompensationScreen> {
 
+  final TextEditingController apertureController = TextEditingController();
+  final TextEditingController speedController = TextEditingController();
+  final TextEditingController isoController = TextEditingController();
+
   double? selectedAperture = 16;
   String? selectedSpeedLabel = '1/400';
   double? selectedSpeedValue = 1/400;
   int? selectedISO = 400;
-  final TextEditingController focalController = TextEditingController();
+
+  bool apertureLocked = true;
+  bool speedLocked = false;
+  bool isoLocked = false;
+
+  double? ev;
+
+  // Cálculo de la exposición
+  double evFrom(double aperture, double speed, int iso) {
+    return (log(aperture * aperture / speed) / ln2) - (log(iso / 100) / ln2);
+  }
+
+  // Cálculo de velocidad a partir de la exposición
+  double calculateShutterSpeed(double aperture, double ev, int iso) {
+    return (aperture * aperture) / (pow(2, ev) * (iso / 100));
+  }
 
   @override
   void initState() {
     super.initState();
+    apertureController.text = selectedAperture != null ? 'f/${selectedAperture!.toStringAsFixed(1)}' : '';
+    speedController.text = selectedSpeedLabel ?? '';
+    isoController.text = selectedISO?.toString() ?? '';
   }
 
   @override
   void dispose() {
-    focalController.dispose();
+    apertureController.dispose();
+    speedController.dispose();
+    isoController.dispose();
     super.dispose();
   }
 
@@ -54,20 +80,188 @@ class _CompensationScreenState extends State<CompensationScreen> {
       320,250, 200, 160, 125, 100,
     ];
 
+    // FUNCIONES
+    // AJUSTAR EL VALOR DE APERTURA A LA MÁS CERCANA
+    double roundToNearestAperture(double value, List<double> apertures) {
+      final rounded = apertures.reduce((a, b) =>
+        (value - a).abs() < (value - b).abs() ? a : b);
+
+      print('→ redondeando $value a $rounded');
+      return rounded;
+    }
+
+    // AJUSTAR EL VALOR DE VELOCIDAD A LA MÁS CERCANA
+    double roundToNearestSpeed(double value, List<Map<String, double>> speeds) {
+      final rounded = speeds.reduce((a, b) =>
+        (value - a.values.first).abs() < (value - b.values.first).abs() ? a : b);
+
+      print('→ redondeando $value a ${rounded.keys.first}');
+      return rounded.values.first;
+    }
+
+    // AJUSTAR EL VALOR DE ISO A LA MÁS CERCANA
+    int roundToNearestISO(double value, List<int> isos) {
+      final rounded = isos.reduce((a, b) =>
+        (value - a).abs() < (value - b).abs() ? a : b);
+
+      print('→ redondeando $value a $rounded');
+      return rounded;
+    }
+
+    // RECUPERAR LA ETIQUETA DE VELOCIDAD A PARTIR DEL VALOR
+    String labelFromValue(double value) {
+      const double tolerance = 0.00001;
+
+      for (final entry in speeds) {
+        final label = entry.keys.first;
+        final val = entry.values.first;
+
+        if ((val - value).abs() < tolerance) {
+          return label;
+        }
+      }
+
+      return 'Desconocido';
+    }
+
+    // MOSTRAR ERROR
+    void showExposureError(BuildContext context, String message) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog(
+          barrierDismissible: false,
+          context: context,
+          useRootNavigator: true,
+          builder: (context) => AlertDialog(
+            title: const Text('Valor fuera de rango'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Aceptar', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      });
+    }
+
+    // CALCULAR LA EXPOSICIÓN COMPENSADA
+    void recalculateExposure({
+      double? newAperture,
+      double? newSpeed,
+      int? newISO,
+    }) {
+      
+      print('Nueva Apertura: $newAperture');
+      print('Nueva Velocidad: $newSpeed');
+      print('Nueva ISO: $newISO');
+      print('apertureLocked: $apertureLocked');
+      print('speedLocked: $speedLocked');
+      print('isoLocked: $isoLocked');
+      print('Aperture Original: $selectedAperture');
+      print('SpeedValue Original: $selectedSpeedValue');
+      print('ISO Original: $selectedISO');
+
+      // Calculamos la exposición base
+      ev = evFrom(selectedAperture!, selectedSpeedValue!, selectedISO!);
+      print('EV: $ev');
+
+      // Evaluamos qué variables se está modificando
+      if(newAperture != null) {
+        
+        // Verificamos que otra variable está bloqueada
+        if(speedLocked == true) {
+
+          // Calculamos la nueva ISO con velocidad bloqueada
+          double newISOValue = (pow(newAperture, 2) / (selectedSpeedValue! * pow(2, ev!))) * 100;
+
+          if(newISOValue <= 1/5000 || newISOValue >= 40) {
+
+            showExposureError(context, 'El valor de ISO calculado está fuera de límite (100 - 25600).');
+
+            setState(() {
+              // Regreso todos los valores a su estado original
+              selectedAperture = selectedAperture;
+              apertureController.text = 'f/${selectedAperture!.toStringAsFixed(1)}';
+              selectedSpeedValue = selectedSpeedValue;
+              selectedSpeedLabel = labelFromValue(selectedSpeedValue!);
+              speedController.text = selectedSpeedLabel!;
+              selectedISO = selectedISO;
+              isoController.text = selectedISO.toString();
+            });
+
+            return;
+          }
+
+          selectedISO = roundToNearestISO(newISOValue, isos);
+          isoController.text = selectedISO.toString();
+
+          selectedAperture = newAperture;
+          apertureController.text = 'f/${newAperture.toStringAsFixed(1)}';
+
+        } else if(isoLocked == true) {
+
+          // Si la ISO está bloqueada, calculamos la nueva velocidad
+          double newSpeedValue = calculateShutterSpeed(newAperture, ev!, selectedISO!);
+
+          if(newSpeedValue <= 75 || newSpeedValue >= 38400) {
+
+            showExposureError(context, 'El valor de la velocidad calculada está fuera de límite (1/4000 - 30s).');
+
+            setState(() {
+              // Regreso todos los valores a su estado original
+              selectedAperture = selectedAperture;
+              apertureController.text = 'f/${selectedAperture!.toStringAsFixed(1)}';
+              selectedSpeedValue = selectedSpeedValue;
+              selectedSpeedLabel = labelFromValue(selectedSpeedValue!);
+              speedController.text = selectedSpeedLabel!;
+              selectedISO = selectedISO;
+              isoController.text = selectedISO.toString();
+            });
+
+            return;
+          }
+
+          newSpeedValue = roundToNearestSpeed(newSpeedValue, speeds);
+          selectedSpeedValue = newSpeedValue;
+          selectedSpeedLabel = labelFromValue(newSpeedValue);
+          speedController.text = selectedSpeedLabel!;
+          selectedAperture = newAperture;
+          apertureController.text = 'f/${newAperture.toStringAsFixed(1)}';
+        }
+      }
+    }
+
+
     void showAperturePicker() {
+
+      //ev = evFrom(selectedAperture!, selectedSpeedValue!, selectedISO!); 
+
       ExposurePickers.showAperturePicker(
         context: context,
         apertures: apertures,
         selectedAperture: selectedAperture,
         onSelected: (value) {
           setState(() {
-            selectedAperture = value;
+
+            if (!apertureLocked && (speedLocked || isoLocked)) {
+
+              recalculateExposure(newAperture: value);
+            } else {
+
+              selectedAperture = value;
+              apertureController.text = 'f/${value.toStringAsFixed(1)}';
+            }
           });
         },
       );
     }
 
     void showSpeedPicker() {
+
+      ev = evFrom(selectedAperture!, selectedSpeedValue!, selectedISO!);
+
       ExposurePickers.showSpeedPicker(
         context: context,
         speeds: speeds,
@@ -76,12 +270,20 @@ class _CompensationScreenState extends State<CompensationScreen> {
           setState(() {
             selectedSpeedLabel = label;
             selectedSpeedValue = value;
+            speedController.text = label;
+            
+            if (!speedLocked && (apertureLocked || isoLocked)) {
+              recalculateExposure(newSpeed: value);
+            }
           });
         },
       );
     }
 
     void showIsoPicker() {
+
+      ev = evFrom(selectedAperture!, selectedSpeedValue!, selectedISO!);
+
       ExposurePickers.showISOPicker(
         context: context,
         isos: isos,
@@ -89,17 +291,14 @@ class _CompensationScreenState extends State<CompensationScreen> {
         onSelected: (value) {
           setState(() {
             selectedISO = value;
+            isoController.text = value.toString();
+            
+            if (!isoLocked && (apertureLocked || speedLocked)) {
+              recalculateExposure(newISO: value);
+            }
           });
         },
       );
-    }
-
-    // FUNCIONES
-    // Calcular la distancia hiperfocal
-    double calculateHyperfocal(double focalLength, double aperture) {
-      const double c = 0.019; // círculo de confusión para Canon APS-C en mm
-      double h = (focalLength * focalLength) / (aperture * c) + focalLength; // en mm
-      return h / 1000; // convertir a metros
     }
 
     return Scaffold(
@@ -153,11 +352,11 @@ class _CompensationScreenState extends State<CompensationScreen> {
                         ),
                         const SizedBox(height: 12),
                         const Text(
-                          'Ingresa los valores de apertura, velocidad e ISO que te proporciona el exposímetro. Asegúrate que la exposición es correcta.',
+                          'Ingresa los valores de apertura, velocidad e ISO que te proporciona el exposímetro. Asegúrate que la exposición es correcta.\n\nPara obtener una exposición compensada, bloquea una variable y modifica cualquiera de las otras dos.',
                           style: TextStyle(fontSize: 14, height: 1.4),
                         ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 20),
                         
                         const Text(
                           'Apertura (f/)',
@@ -170,32 +369,57 @@ class _CompensationScreenState extends State<CompensationScreen> {
 
                         const SizedBox(height: 8),
 
-                        GestureDetector(
-                          onTap: showAperturePicker,
-                          child: AbsorbPointer(
-                            child: TextFormField(
-                              decoration: InputDecoration(
-                                //labelText: 'Apertura (f/)',
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                        Row(
+                          children: [
+
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  apertureLocked
+                                      ? null
+                                      : showAperturePicker();
+                                },
+                                child: AbsorbPointer(
+                                  child: TextFormField(
+                                    decoration: InputDecoration(
+                                      //labelText: 'Apertura (f/)',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                                        borderSide: BorderSide(color: Colors.grey),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                                        borderSide: BorderSide(color: Colors.black),
+                                      ),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                    ),
+                                    controller: apertureController,
+                                  ),
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                                  borderSide: BorderSide(color: Colors.black),
-                                ),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                              ),
-                              controller: TextEditingController(
-                                text: selectedAperture != null ? 'f/${selectedAperture!.toStringAsFixed(1)}' : '',
                               ),
                             ),
-                          ),
+
+                            SizedBox(width: 20),
+
+                            GestureDetector(
+                              onTap: () {
+                                apertureLocked = !apertureLocked;
+                                if (apertureLocked) {
+                                  speedLocked = false;
+                                  isoLocked = false;
+                                }
+                                setState(() {});
+                              },
+                              child: apertureLocked
+                                  ? Icon(Icons.lock_rounded, color: Colors.red[900])
+                                  : Icon(Icons.lock_open_rounded, color: Colors.black54),
+                            ),
+                          ],
                         ),
 
                         SizedBox(height: 20),
@@ -211,32 +435,57 @@ class _CompensationScreenState extends State<CompensationScreen> {
 
                         const SizedBox(height: 8),
                         
-                        GestureDetector(
-                          onTap: showSpeedPicker,
-                          child: AbsorbPointer(
-                            child: TextFormField(
-                              decoration: InputDecoration(
-                                //labelText: 'Velocidad',
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                        Row(
+                          children: [
+
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  speedLocked
+                                      ? null
+                                      : showSpeedPicker();
+                                },
+                                child: AbsorbPointer(
+                                  child: TextFormField(
+                                    decoration: InputDecoration(
+                                      //labelText: 'Velocidad',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                                        borderSide: BorderSide(color: Colors.grey),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                                        borderSide: BorderSide(color: Colors.black),
+                                      ),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                    ),
+                                    controller: speedController,
+                                  ),
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                                  borderSide: BorderSide(color: Colors.black),
-                                ),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                              ),
-                              controller: TextEditingController(
-                                text: selectedAperture != null ? selectedSpeedLabel : '',
                               ),
                             ),
-                          ),
+
+                            SizedBox(width: 20),
+
+                            GestureDetector(
+                              onTap: () {
+                                speedLocked = !speedLocked;
+                                if (speedLocked) {
+                                  apertureLocked = false;
+                                  isoLocked = false;
+                                }
+                                setState(() {});
+                              },
+                              child: speedLocked
+                                  ? Icon(Icons.lock_rounded, color: Colors.red[900])
+                                  : Icon(Icons.lock_open_rounded, color: Colors.black54),
+                            ),
+                          ],
                         ),
 
                         SizedBox(height: 20),
@@ -252,60 +501,64 @@ class _CompensationScreenState extends State<CompensationScreen> {
 
                         const SizedBox(height: 2),
 
-                        GestureDetector(
-                          onTap: showIsoPicker,
-                          child: AbsorbPointer(
-                            child: TextFormField(
-                              decoration: InputDecoration(
-                                //labelText: 'ISO',
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                        Row(
+                          children: [
+
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  isoLocked
+                                      ? null
+                                      : showIsoPicker();
+                                },
+                                child: AbsorbPointer(
+                                  child: TextFormField(
+                                    decoration: InputDecoration(
+                                      //labelText: 'ISO',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                                        borderSide: BorderSide(color: Colors.grey),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                                        borderSide: BorderSide(color: Colors.black),
+                                      ),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                    ),
+                                    controller: isoController,
+                                  ),
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                                  borderSide: BorderSide(color: Colors.black),
-                                ),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                              ),
-                              controller: TextEditingController(
-                                text: selectedISO != null ? selectedISO!.toString() : '',
                               ),
                             ),
-                          ),
+
+                            SizedBox(width: 20),
+
+                            GestureDetector(
+                              onTap: () {
+                                isoLocked = !isoLocked;
+                                if (isoLocked) {
+                                  apertureLocked = false;
+                                  speedLocked = false;
+                                }
+                                setState(() {});
+                              },
+                              child: isoLocked
+                                  ? Icon(Icons.lock_rounded, color: Colors.red[900])
+                                  : Icon(Icons.lock_open_rounded, color: Colors.black54),
+                            ),
+                          ],
                         ),
+
+                        SizedBox(height: 20),
                       ],
                     ),
                   ),
                 ),
-
-                if (selectedAperture != null && focalController.text.isNotEmpty)
-                  Builder(
-                    builder: (_) {
-                      final focal = double.tryParse(focalController.text);
-                      if (focal == null) return const SizedBox.shrink();
-
-                      final hiperfocal = calculateHyperfocal(focal, selectedAperture!);
-                      return Column(
-                        children: [
-                          const SizedBox(height: 20),
-                          Text(
-                            'Distancia hiperfocal: ${hiperfocal.toStringAsFixed(2)} m',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
 
                   SizedBox(height: 50),
 
