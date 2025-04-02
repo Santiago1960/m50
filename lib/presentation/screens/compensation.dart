@@ -22,11 +22,11 @@ class _CompensationScreenState extends State<CompensationScreen> {
   double? selectedSpeedValue = 1/400;
   int? selectedISO = 400;
 
-  bool apertureLocked = true;
+  bool apertureLocked = false;
   bool speedLocked = false;
   bool isoLocked = false;
 
-  double? ev;
+  double ev = 0;
 
   // Cálculo de la exposición
   double evFrom(double aperture, double speed, int iso) {
@@ -164,10 +164,9 @@ class _CompensationScreenState extends State<CompensationScreen> {
       print('ISO Original: $selectedISO');
 
       // Calculamos la exposición base
-      ev = evFrom(selectedAperture!, selectedSpeedValue!, selectedISO!);
       print('EV: $ev');
 
-      // Evaluamos qué variables se está modificando
+      // CUANDO CAMBIAMOS LA APERTURA
       if(newAperture != null) {
         
         // Verificamos que otra variable está bloqueada
@@ -176,27 +175,17 @@ class _CompensationScreenState extends State<CompensationScreen> {
           // Calculamos la nueva ISO con velocidad bloqueada
           double newISOValue = (pow(newAperture, 2) / (selectedSpeedValue! * pow(2, ev!))) * 100;
 
-          if(newISOValue <= 1/5000 || newISOValue >= 40) {
+          if(newISOValue <= 75 || newISOValue >= 38400) {
 
             showExposureError(context, 'El valor de ISO calculado está fuera de límite (100 - 25600).');
 
-            setState(() {
-              // Regreso todos los valores a su estado original
-              selectedAperture = selectedAperture;
-              apertureController.text = 'f/${selectedAperture!.toStringAsFixed(1)}';
-              selectedSpeedValue = selectedSpeedValue;
-              selectedSpeedLabel = labelFromValue(selectedSpeedValue!);
-              speedController.text = selectedSpeedLabel!;
-              selectedISO = selectedISO;
-              isoController.text = selectedISO.toString();
-            });
+            setState(() { });
 
             return;
           }
 
           selectedISO = roundToNearestISO(newISOValue, isos);
           isoController.text = selectedISO.toString();
-
           selectedAperture = newAperture;
           apertureController.text = 'f/${newAperture.toStringAsFixed(1)}';
 
@@ -205,20 +194,11 @@ class _CompensationScreenState extends State<CompensationScreen> {
           // Si la ISO está bloqueada, calculamos la nueva velocidad
           double newSpeedValue = calculateShutterSpeed(newAperture, ev!, selectedISO!);
 
-          if(newSpeedValue <= 75 || newSpeedValue >= 38400) {
+          if(newSpeedValue <= 1/4000 || newSpeedValue >= 30) {
 
             showExposureError(context, 'El valor de la velocidad calculada está fuera de límite (1/4000 - 30s).');
 
-            setState(() {
-              // Regreso todos los valores a su estado original
-              selectedAperture = selectedAperture;
-              apertureController.text = 'f/${selectedAperture!.toStringAsFixed(1)}';
-              selectedSpeedValue = selectedSpeedValue;
-              selectedSpeedLabel = labelFromValue(selectedSpeedValue!);
-              speedController.text = selectedSpeedLabel!;
-              selectedISO = selectedISO;
-              isoController.text = selectedISO.toString();
-            });
+            setState(() { });
 
             return;
           }
@@ -231,12 +211,63 @@ class _CompensationScreenState extends State<CompensationScreen> {
           apertureController.text = 'f/${newAperture.toStringAsFixed(1)}';
         }
       }
+
+      // CUANDO CAMBIAMOS LA VELOCIDAD
+      if(newSpeed != null) {
+
+        print('Nueva velocidad: $newSpeed');
+        
+        // Verificamos que otra variable está bloqueada
+        if(apertureLocked == true) {
+
+          print('EV base: $ev');
+          print('Apertura: $selectedAperture');
+          print('Nueva velocidad: $newSpeed');
+
+          // Calculamos la nueva ISO con apertura bloqueada
+          double newISO = (pow(selectedAperture!, 2) * 100) / (newSpeed * pow(2, ev!));
+          print('Nuevo valor de ISO: $newISO');
+
+          if(newISO <= 75 || newISO >= 38400) {
+
+            showExposureError(context, 'El valor de ISO calculado está fuera de límite (100 - 25600).');
+
+            setState(() {});
+
+            return;
+          }
+
+          selectedISO = roundToNearestISO(newISO, isos);
+          isoController.text = selectedISO.toString();
+          selectedSpeedValue = newSpeed;
+          selectedSpeedLabel = labelFromValue(newSpeed);
+          speedController.text = selectedSpeedLabel!;
+
+        } else if(isoLocked == true) {
+
+          // Si la ISO está bloqueada, calculamos la nueva apertura
+          double newAperture = sqrt(newSpeed * pow(2, ev!) * (selectedISO! / 100));
+
+          if(newAperture <= 1.1 || newAperture >= 23) {
+
+            showExposureError(context, 'El valor de apertura calculado está fuera de límite (f/1.4 - f/22).');
+
+            setState(() { });
+
+            return;
+          }
+
+          selectedAperture = roundToNearestAperture(newAperture, apertures);
+          apertureController.text = 'f/${selectedAperture!.toStringAsFixed(1)}';
+          selectedSpeedValue = newSpeed;
+          selectedSpeedLabel = labelFromValue(newSpeed);
+          speedController.text = selectedSpeedLabel!;
+        }
+      }
     }
 
 
     void showAperturePicker() {
-
-      //ev = evFrom(selectedAperture!, selectedSpeedValue!, selectedISO!); 
 
       ExposurePickers.showAperturePicker(
         context: context,
@@ -260,20 +291,21 @@ class _CompensationScreenState extends State<CompensationScreen> {
 
     void showSpeedPicker() {
 
-      ev = evFrom(selectedAperture!, selectedSpeedValue!, selectedISO!);
-
       ExposurePickers.showSpeedPicker(
         context: context,
         speeds: speeds,
         selectedLabel: selectedSpeedLabel,
         onSelected: (label, value) {
           setState(() {
-            selectedSpeedLabel = label;
-            selectedSpeedValue = value;
-            speedController.text = label;
-            
+
             if (!speedLocked && (apertureLocked || isoLocked)) {
+
               recalculateExposure(newSpeed: value);
+            } else {
+
+              selectedSpeedValue = value;
+              selectedSpeedLabel = label;
+              speedController.text = selectedSpeedLabel!;
             }
           });
         },
@@ -281,8 +313,6 @@ class _CompensationScreenState extends State<CompensationScreen> {
     }
 
     void showIsoPicker() {
-
-      ev = evFrom(selectedAperture!, selectedSpeedValue!, selectedISO!);
 
       ExposurePickers.showISOPicker(
         context: context,
@@ -338,9 +368,11 @@ class _CompensationScreenState extends State<CompensationScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Row(
-                          children: const [
+                          children: [
                             Icon(Icons.exposure, color: Colors.black54),
+
                             SizedBox(width: 8),
+
                             Text(
                               'Exposición Base',
                               style: TextStyle(
@@ -348,11 +380,24 @@ class _CompensationScreenState extends State<CompensationScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+
+                            SizedBox(width: 35),
+
+                            ev != 0
+                                ? Text(
+                                    'EV: ${ev.toStringAsFixed(6)}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black54,
+                                    ),
+                                  )
+                                : Container(),
                           ],
                         ),
                         const SizedBox(height: 12),
                         const Text(
-                          'Ingresa los valores de apertura, velocidad e ISO que te proporciona el exposímetro. Asegúrate que la exposición es correcta.\n\nPara obtener una exposición compensada, bloquea una variable y modifica cualquiera de las otras dos.',
+                          'Ingresa los valores de apertura, velocidad e ISO que te proporciona el exposímetro. Asegúrate que la exposición es correcta y fíjala.\n\nPara obtener una exposición compensada, bloquea el candado una variable y modifica cualquiera de las otras dos.',
                           style: TextStyle(fontSize: 14, height: 1.4),
                         ),
 
@@ -406,19 +451,21 @@ class _CompensationScreenState extends State<CompensationScreen> {
 
                             SizedBox(width: 20),
 
-                            GestureDetector(
-                              onTap: () {
-                                apertureLocked = !apertureLocked;
-                                if (apertureLocked) {
-                                  speedLocked = false;
-                                  isoLocked = false;
-                                }
-                                setState(() {});
-                              },
-                              child: apertureLocked
-                                  ? Icon(Icons.lock_rounded, color: Colors.red[900])
-                                  : Icon(Icons.lock_open_rounded, color: Colors.black54),
-                            ),
+                            ev != 0
+                              ? GestureDetector(
+                                onTap: () {
+                                  apertureLocked = !apertureLocked;
+                                  if (apertureLocked) {
+                                    speedLocked = false;
+                                    isoLocked = false;
+                                  }
+                                  setState(() {});
+                                },
+                                child: apertureLocked
+                                    ? Icon(Icons.lock_rounded, color: Colors.red[900])
+                                    : Icon(Icons.lock_open_rounded, color: Colors.black54),
+                              )
+                              : Container(),
                           ],
                         ),
 
@@ -472,19 +519,21 @@ class _CompensationScreenState extends State<CompensationScreen> {
 
                             SizedBox(width: 20),
 
-                            GestureDetector(
-                              onTap: () {
-                                speedLocked = !speedLocked;
-                                if (speedLocked) {
-                                  apertureLocked = false;
-                                  isoLocked = false;
-                                }
-                                setState(() {});
-                              },
-                              child: speedLocked
-                                  ? Icon(Icons.lock_rounded, color: Colors.red[900])
-                                  : Icon(Icons.lock_open_rounded, color: Colors.black54),
-                            ),
+                            ev != 0
+                              ? GestureDetector(
+                                onTap: () {
+                                  speedLocked = !speedLocked;
+                                  if (speedLocked) {
+                                    apertureLocked = false;
+                                    isoLocked = false;
+                                  }
+                                  setState(() {});
+                                },
+                                child: speedLocked
+                                    ? Icon(Icons.lock_rounded, color: Colors.red[900])
+                                    : Icon(Icons.lock_open_rounded, color: Colors.black54),
+                              )
+                              : Container(),
                           ],
                         ),
 
@@ -538,29 +587,51 @@ class _CompensationScreenState extends State<CompensationScreen> {
 
                             SizedBox(width: 20),
 
-                            GestureDetector(
-                              onTap: () {
-                                isoLocked = !isoLocked;
-                                if (isoLocked) {
-                                  apertureLocked = false;
-                                  speedLocked = false;
-                                }
-                                setState(() {});
-                              },
-                              child: isoLocked
-                                  ? Icon(Icons.lock_rounded, color: Colors.red[900])
-                                  : Icon(Icons.lock_open_rounded, color: Colors.black54),
-                            ),
+                            ev != 0
+                              ? GestureDetector(
+                                onTap: () {
+                                  isoLocked = !isoLocked;
+                                  if (isoLocked) {
+                                    apertureLocked = false;
+                                    speedLocked = false;
+                                  }
+                                  setState(() {});
+                                },
+                                child: isoLocked
+                                    ? Icon(Icons.lock_rounded, color: Colors.red[900])
+                                    : Icon(Icons.lock_open_rounded, color: Colors.black54),
+                              )
+                              : Container(),
                           ],
                         ),
 
                         SizedBox(height: 20),
+
+                        // Botón para fijar la exposición
+                        Center(
+                          child: ElevatedButton(
+                            onPressed: (apertureLocked || speedLocked || isoLocked)
+                              ? null
+                              : () {
+                                  setState(() {
+                                    ev = evFrom(selectedAperture!, selectedSpeedValue!, selectedISO!);
+                                  });
+                                },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text('Fijar exposición', style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
 
-                  SizedBox(height: 50),
+                  SizedBox(height: 20),
 
                   Text(
                     '* Válido para cámaras Canon M50 MarkII y Canon APS-C en general',
