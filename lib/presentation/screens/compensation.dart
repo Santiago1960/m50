@@ -86,7 +86,6 @@ class _CompensationScreenState extends State<CompensationScreen> {
       final rounded = apertures.reduce((a, b) =>
         (value - a).abs() < (value - b).abs() ? a : b);
 
-      print('→ redondeando $value a $rounded');
       return rounded;
     }
 
@@ -95,7 +94,6 @@ class _CompensationScreenState extends State<CompensationScreen> {
       final rounded = speeds.reduce((a, b) =>
         (value - a.values.first).abs() < (value - b.values.first).abs() ? a : b);
 
-      print('→ redondeando $value a ${rounded.keys.first}');
       return rounded.values.first;
     }
 
@@ -104,7 +102,6 @@ class _CompensationScreenState extends State<CompensationScreen> {
       final rounded = isos.reduce((a, b) =>
         (value - a).abs() < (value - b).abs() ? a : b);
 
-      print('→ redondeando $value a $rounded');
       return rounded;
     }
 
@@ -152,19 +149,6 @@ class _CompensationScreenState extends State<CompensationScreen> {
       double? newSpeed,
       int? newISO,
     }) {
-      
-      print('Nueva Apertura: $newAperture');
-      print('Nueva Velocidad: $newSpeed');
-      print('Nueva ISO: $newISO');
-      print('apertureLocked: $apertureLocked');
-      print('speedLocked: $speedLocked');
-      print('isoLocked: $isoLocked');
-      print('Aperture Original: $selectedAperture');
-      print('SpeedValue Original: $selectedSpeedValue');
-      print('ISO Original: $selectedISO');
-
-      // Calculamos la exposición base
-      print('EV: $ev');
 
       // CUANDO CAMBIAMOS LA APERTURA
       if(newAperture != null) {
@@ -173,7 +157,7 @@ class _CompensationScreenState extends State<CompensationScreen> {
         if(speedLocked == true) {
 
           // Calculamos la nueva ISO con velocidad bloqueada
-          double newISOValue = (pow(newAperture, 2) / (selectedSpeedValue! * pow(2, ev!))) * 100;
+          double newISOValue = (pow(newAperture, 2) / (selectedSpeedValue! * pow(2, ev))) * 100;
 
           if(newISOValue <= 75 || newISOValue >= 38400) {
 
@@ -192,7 +176,7 @@ class _CompensationScreenState extends State<CompensationScreen> {
         } else if(isoLocked == true) {
 
           // Si la ISO está bloqueada, calculamos la nueva velocidad
-          double newSpeedValue = calculateShutterSpeed(newAperture, ev!, selectedISO!);
+          double newSpeedValue = calculateShutterSpeed(newAperture, ev, selectedISO!);
 
           if(newSpeedValue <= 1/4000 || newSpeedValue >= 30) {
 
@@ -215,18 +199,11 @@ class _CompensationScreenState extends State<CompensationScreen> {
       // CUANDO CAMBIAMOS LA VELOCIDAD
       if(newSpeed != null) {
 
-        print('Nueva velocidad: $newSpeed');
-        
         // Verificamos que otra variable está bloqueada
         if(apertureLocked == true) {
 
-          print('EV base: $ev');
-          print('Apertura: $selectedAperture');
-          print('Nueva velocidad: $newSpeed');
-
           // Calculamos la nueva ISO con apertura bloqueada
-          double newISO = (pow(selectedAperture!, 2) * 100) / (newSpeed * pow(2, ev!));
-          print('Nuevo valor de ISO: $newISO');
+          double newISO = (pow(selectedAperture!, 2) * 100) / (newSpeed * pow(2, ev));
 
           if(newISO <= 75 || newISO >= 38400) {
 
@@ -246,7 +223,7 @@ class _CompensationScreenState extends State<CompensationScreen> {
         } else if(isoLocked == true) {
 
           // Si la ISO está bloqueada, calculamos la nueva apertura
-          double newAperture = sqrt(newSpeed * pow(2, ev!) * (selectedISO! / 100));
+          double newAperture = sqrt(newSpeed * pow(2, ev) * (selectedISO! / 100));
 
           if(newAperture <= 1.1 || newAperture >= 23) {
 
@@ -264,6 +241,52 @@ class _CompensationScreenState extends State<CompensationScreen> {
           speedController.text = selectedSpeedLabel!;
         }
       }
+
+      // CUANDO CAMBIAMOS LA ISO
+      if(newISO != null) {
+
+        // Verificamos que otra variable está bloqueada
+        if(apertureLocked == true) {
+
+          // Calculamos la nueva ISO con apertura bloqueada
+          double newSpeed = (selectedAperture! * selectedAperture!) / (pow(2, ev) * (newISO / 100));
+
+          if(newSpeed <= 1/4000 || newSpeed >= 30) {
+
+            showExposureError(context, 'El valor de la velocidad calculada está fuera de límite (1/4000 - 30s).');
+
+            setState(() {});
+
+            return;
+          }
+
+          selectedSpeedValue = roundToNearestSpeed(newSpeed, speeds);
+          print('NewSpeedAproximado: $selectedSpeedValue');
+          selectedSpeedLabel = labelFromValue(newSpeed);
+          speedController.text = selectedSpeedLabel!;
+          selectedISO = newISO;
+          isoController.text = newISO.toString();
+
+        } else if(speedLocked == true) {
+
+          // Si la velocidad está bloqueada, calculamos la nueva apertura
+          double newAperture = sqrt(selectedSpeedValue! * pow(2, ev) * (newISO / 100));
+
+          if(newAperture <= 1.1 || newAperture >= 23) {
+
+            showExposureError(context, 'El valor de apertura calculado está fuera de límite (f/1.4 - f/22).');
+
+            setState(() { });
+
+            return;
+          }
+
+          selectedAperture = roundToNearestAperture(newAperture, apertures);
+          apertureController.text = 'f/${selectedAperture!.toStringAsFixed(1)}';
+          selectedISO = newISO;
+          isoController.text = newISO.toString();
+        }
+      }
     }
 
 
@@ -274,6 +297,7 @@ class _CompensationScreenState extends State<CompensationScreen> {
         apertures: apertures,
         selectedAperture: selectedAperture,
         onSelected: (value) {
+
           setState(() {
 
             if (!apertureLocked && (speedLocked || isoLocked)) {
@@ -296,6 +320,7 @@ class _CompensationScreenState extends State<CompensationScreen> {
         speeds: speeds,
         selectedLabel: selectedSpeedLabel,
         onSelected: (label, value) {
+
           setState(() {
 
             if (!speedLocked && (apertureLocked || isoLocked)) {
@@ -319,12 +344,16 @@ class _CompensationScreenState extends State<CompensationScreen> {
         isos: isos,
         selectedISO: selectedISO,
         onSelected: (value) {
+
           setState(() {
-            selectedISO = value;
-            isoController.text = value.toString();
             
             if (!isoLocked && (apertureLocked || speedLocked)) {
+
               recalculateExposure(newISO: value);
+            } else {
+
+              selectedISO = value;
+              isoController.text = value.toString();
             }
           });
         },
@@ -397,7 +426,7 @@ class _CompensationScreenState extends State<CompensationScreen> {
                         ),
                         const SizedBox(height: 12),
                         const Text(
-                          'Ingresa los valores de apertura, velocidad e ISO que te proporciona el exposímetro. Asegúrate que la exposición es correcta y fíjala.\n\nPara obtener una exposición compensada, bloquea el candado una variable y modifica cualquiera de las otras dos.',
+                          'Ingresa los valores de apertura, velocidad e ISO que te proporciona el exposímetro. Asegúrate que la exposición es correcta y fíjala.\n\nPara obtener una exposición compensada, bloquea el candado de una variable y modifica cualquiera de las otras dos.',
                           style: TextStyle(fontSize: 14, height: 1.4),
                         ),
 

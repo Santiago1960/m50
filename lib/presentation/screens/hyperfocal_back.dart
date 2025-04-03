@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../widgets/pickers/widgets.dart';
-
 class HyperfocalScreen extends StatefulWidget {
   const HyperfocalScreen({super.key});
 
@@ -11,9 +9,8 @@ class HyperfocalScreen extends StatefulWidget {
 
 class _HyperfocalScreenState extends State<HyperfocalScreen> {
 
-  double? selectedAperture = 5.6;
+  double? selectedAperture;
   final TextEditingController focalController = TextEditingController();
-  final TextEditingController apertureController = TextEditingController();
 
   @override
   void initState() {
@@ -23,7 +20,6 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
   @override
   void dispose() {
     focalController.dispose();
-    apertureController.dispose();
     super.dispose();
   }
 
@@ -31,30 +27,11 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
   Widget build(BuildContext context) {
 
     const List<double> apertures = [
-      22.0, 20.0, 18.0, 16.0, 14.0, 13.0,
-      11.0, 10.0, 9.0, 8.0, 7.1, 6.3, 5.6,
-      5.0, 4.5, 4.0, 3.5, 3.2, 2.8, 2.5,
-      2.2, 2.0, 1.8, 1.4
+      1.4, 1.8, 2.0, 2.8, 3.5, 4.0, 5.6, 6.3, 7.1, 8.0, 9.0,
+      11.0, 13.0, 14.0, 16.0, 18.0, 20.0, 22.0,
     ];
 
     // FUNCIONES
-
-    void showAperturePicker() {
-
-      ExposurePickers.showAperturePicker(
-        context: context,
-        apertures: apertures,
-        selectedAperture: selectedAperture,
-        onSelected: (value) {
-
-          setState(() {
-            selectedAperture = value;
-            apertureController.text = 'f/$value';
-          });
-        },
-      );
-    }
-
     // Calcular la distancia hiperfocal
     double calculateHyperfocal(double focalLength, double aperture) {
       const double c = 0.019; // círculo de confusión para Canon APS-C en mm
@@ -183,35 +160,36 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
                         color: Colors.black87,
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
-                    GestureDetector(
-                      onTap: () {
-                        showAperturePicker();
-                      },
-                                        
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(12)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(12)),
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(12)),
-                              borderSide: BorderSide(color: Colors.black),
-                            ),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    DropdownButtonFormField<double>(
+                      value: selectedAperture,
+                      decoration: const InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)), // ← redondeado
                           ),
-                          controller: apertureController,
-                        ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                       ),
+                      items: apertures.map((ap) {
+                        return DropdownMenuItem(
+                          value: ap,
+                          child: Text('f/${ap.toStringAsFixed(1)}'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedAperture = value;
+                        });
+                      },
                     ),
                   ],
                 ),
@@ -239,12 +217,12 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
                     },
                   ),
 
-                SizedBox(height: 50),
+                  SizedBox(height: 50),
 
-                Text(
-                  '* Válido para cámaras Canon M50 MarkII y Canon APS-C en general',
-                  style: TextStyle(fontSize: 10),
-                ),
+                  Text(
+                    '* Válido para cámaras Canon M50 MarkII y Canon APS-C en general',
+                    style: TextStyle(fontSize: 10),
+                  ),
               ],
             ),
           ),

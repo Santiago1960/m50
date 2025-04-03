@@ -6,7 +6,7 @@ final router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const CompensationScreen(),
+      builder: (context, state) => const HyperfocalScreen(),
     )
   ],
 );
