@@ -1,6 +1,8 @@
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../widgets/pickers/widgets.dart';
 
@@ -261,7 +263,6 @@ class _CompensationScreenState extends State<CompensationScreen> {
           }
 
           selectedSpeedValue = roundToNearestSpeed(newSpeed, speeds);
-          print('NewSpeedAproximado: $selectedSpeedValue');
           selectedSpeedLabel = labelFromValue(newSpeed);
           speedController.text = selectedSpeedLabel!;
           selectedISO = newISO;
@@ -363,8 +364,14 @@ class _CompensationScreenState extends State<CompensationScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,
+        leading: context.canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => context.pop(),
+              )
+            : null,
         centerTitle: true,
-        title: const Text('Compensación de la exposición', style: TextStyle(color: Colors.white60)),
+        title: const Text('Exposición', style: TextStyle(color: Colors.white)),
       ),
       body: Container(
         width: double.infinity,
