@@ -1,4 +1,4 @@
-package com.caicedosantiago.m50
+package com.santiagocaicedo.m50
 
 import io.flutter.embedding.android.FlutterActivity
 

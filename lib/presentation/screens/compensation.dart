@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -109,13 +108,13 @@ class _CompensationScreenState extends State<CompensationScreen> {
 
     // RECUPERAR LA ETIQUETA DE VELOCIDAD A PARTIR DEL VALOR
     String labelFromValue(double value) {
-      const double tolerance = 0.00001;
+      const double tolerance = 0.001;
 
       for (final entry in speeds) {
         final label = entry.keys.first;
         final val = entry.values.first;
 
-        if ((val - value).abs() < tolerance) {
+        if ((val - value).abs() <= val * tolerance) {
           return label;
         }
       }
