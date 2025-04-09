@@ -60,9 +60,16 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
       );
     }
 
-    // Calcular la distancia hiperfocal
+    // Calcular la distancia hiperfocal para Canon APS-C
     double calculateHyperfocal(double focalLength, double aperture) {
       const double c = 0.019; // círculo de confusión para Canon APS-C en mm
+      double h = (focalLength * focalLength) / (aperture * c) + focalLength; // en mm
+      return h / 1000; // convertir a metros
+    }
+
+    // Calcular la distancia hiperfocal para Canon Full Frame
+    double calculateHyperfocalFullFrame(double focalLength, double aperture) {
+      const double c = 0.030; // círculo de confusión para Canon APS-C en mm
       double h = (focalLength * focalLength) / (aperture * c) + focalLength; // en mm
       return h / 1000; // convertir a metros
     }
@@ -102,7 +109,7 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
           ),
           child: SingleChildScrollView( // ← permite expandir si se necesita
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 25),
+              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
               child: Column(
                 children: [
                   Card(
@@ -123,7 +130,7 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
                               Text(
                                 '¿Qué es la distancia hiperfocal?',
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -150,7 +157,7 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
                     ),
                   ),
         
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 15),
         
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,7 +170,9 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
                           color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 8),
+
+                      const SizedBox(height: 2),
+
                       TextField(
                         controller: focalController,
                         keyboardType: TextInputType.number,
@@ -189,7 +198,9 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+
+                  const SizedBox(height: 15),
+
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -202,7 +213,7 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
                         ),
                       ),
         
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 2),
         
                       GestureDetector(
                         onTap: () {
@@ -244,26 +255,71 @@ class _HyperfocalScreenState extends State<HyperfocalScreen> {
                         if (focal == null) return const SizedBox.shrink();
         
                         final hiperfocal = calculateHyperfocal(focal, selectedAperture!);
+                        final hiperfocalFullFrame = calculateHyperfocalFullFrame(focal, selectedAperture!);
                         return Column(
                           children: [
-                            const SizedBox(height: 20),
-                            Text(
-                              'Distancia hiperfocal: ${hiperfocal.toStringAsFixed(2)} m',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+
+                            const SizedBox(height: 15),
+
+                            const Text('Hyperfocal', 
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
                                 color: Colors.black87,
                               ),
+                            ),
+
+                            const SizedBox(height: 5),
+
+                            Table(
+                              border: TableBorder.all(),
+                              children: [
+                                TableRow(
+                                  decoration: const BoxDecoration(color: Colors.black54),
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.all(5.0),
+                                      child: Center(
+                                        child: Text(
+                                          'M50 - APS-C',
+                                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ),
+                                    const Padding(
+                                      padding: EdgeInsets.all(5.0),
+                                      child: Center(
+                                        child: Text(
+                                          '5D - FULL FRAME',
+                                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                TableRow(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(5.0),
+                                      child: Center(child: Text('${hiperfocal.toStringAsFixed(2)} m.')),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(5.0),
+                                      child: Center(child: Text('${hiperfocalFullFrame.toStringAsFixed(2)} m.')),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ],
                         );
                       },
                     ),
         
-                  SizedBox(height: 50),
+                  SizedBox(height: 30),
         
                   Text(
-                    '* Válido para cámaras Canon M50 MarkII y Canon APS-C en general',
+                    '* Válido para cámaras Canon con fomatos APS-C y Full Frame.',
                     style: TextStyle(fontSize: 10),
                   ),
                 ],
