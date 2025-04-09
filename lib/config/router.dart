@@ -22,6 +22,11 @@ final router = GoRouter(
     GoRoute(
       path: '/whitebalance',
       builder: (context, state) => const WhiteBalanceScreen(),
-    )
+    ),
+
+    GoRoute(
+      path: '/dof',
+      builder: (context, state) => const DepthOfFieldScreen(),
+    ),
   ],
 );
