@@ -34,7 +34,7 @@ class ExposurePickers {
                     tempIndex = index;
                   },
                   children: labels
-                      .map((label) => Text(label, style: TextStyle(fontSize: 18)))
+                      .map((label) => Text(label, style: TextStyle(fontSize: 18, color: Colors.black)))
                       .toList(),
                 ),
               ),
@@ -85,7 +85,7 @@ class ExposurePickers {
                     tempIndex = index;
                   },
                   children: apertures
-                      .map((ap) => Text('f/${ap.toStringAsFixed(1)}', style: TextStyle(fontSize: 18)))
+                      .map((ap) => Text('f/${ap.toStringAsFixed(1)}', style: TextStyle(fontSize: 18, color: Colors.black)))
                       .toList(),
                 ),
               ),
@@ -134,7 +134,7 @@ class ExposurePickers {
                     tempIndex = index;
                   },
                   children: isos
-                      .map((iso) => Text(iso.toString(), style: TextStyle(fontSize: 18)))
+                      .map((iso) => Text(iso.toString(), style: TextStyle(fontSize: 18, color: Colors.black)))
                       .toList(),
                 ),
               ),

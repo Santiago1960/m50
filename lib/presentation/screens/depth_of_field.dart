@@ -33,6 +33,20 @@ class _DepthOfFieldScreenState extends State<DepthOfFieldScreen> {
       2.2, 2.0, 1.8, 1.4
     ];
 
+    // FUNCIÓN PARA TRANSFORMAR LA DISTANCIA A METROS, CENTIMETROS O MILIMETROS
+    String formatDistance(double distanceInMeters) {
+      if (distanceInMeters < 0.01) {
+        // Menos de 1 cm → mostrar en mm
+        return '${(distanceInMeters * 1000).toStringAsFixed(1)} mm';
+      } else if (distanceInMeters < 1.0) {
+        // Menos de 1 m → mostrar en cm
+        return '${(distanceInMeters * 100).toStringAsFixed(1)} cm';
+      } else {
+        // 1 metro o más
+        return '${distanceInMeters.toStringAsFixed(2)} m';
+      }
+    }
+
     void showAperturePicker() {
       FocusScope.of(context).unfocus();
       ExposurePickers.showAperturePicker(
@@ -43,7 +57,7 @@ class _DepthOfFieldScreenState extends State<DepthOfFieldScreen> {
           if (!mounted) return;
           setState(() {
             selectedAperture = value;
-            apertureController.text = 'f/\$value';
+            apertureController.text = 'f/$value';
           });
         },
       );
@@ -162,7 +176,7 @@ class _DepthOfFieldScreenState extends State<DepthOfFieldScreen> {
                   const Text('Distancia al sujeto (m)'),
                   TextField(
                     controller: distanceController,
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
@@ -200,7 +214,7 @@ class _DepthOfFieldScreenState extends State<DepthOfFieldScreen> {
                     Builder(
                       builder: (_) {
                         final focal = double.tryParse(focalController.text);
-                        final distance = double.tryParse(distanceController.text);
+                        final distance = double.tryParse(distanceController.text.replaceAll(',', '.'));
                         if (focal == null || distance == null) return const SizedBox.shrink();
 
                         final apsc = calculateDepthOfField(
@@ -265,9 +279,12 @@ class _DepthOfFieldScreenState extends State<DepthOfFieldScreen> {
                                       padding: const EdgeInsets.all(8.0),
                                       child: Column(
                                         children: [
-                                          rowLabelValue('Desde:', '${apsc['near']?.toStringAsFixed(2)} m'),
-                                          rowLabelValue('Hasta:', '${apsc['far'] == double.infinity ? '∞' : '${apsc['far']?.toStringAsFixed(2)} m'}'),
-                                          rowLabelValue('Total:', '${apsc['dof'] == null ? '∞' : '${apsc['dof']!.toStringAsFixed(2)} m'}'),
+                                          rowLabelValue('Desde:', formatDistance(apsc['near']!)),
+                                          rowLabelValue('Hasta:', apsc['far'] == double.infinity ? '∞' : formatDistance(apsc['far']!)),
+                                          rowLabelValue('Total:', apsc['dof'] == null ? '∞' : formatDistance(apsc['dof']!)),
+                                          //rowLabelValue('Desde:', '${apsc['near']?.toStringAsFixed(2)} m'),
+                                          //rowLabelValue('Hasta:', apsc['far'] == double.infinity ? '∞' : '${apsc['far']?.toStringAsFixed(2)} m'),
+                                          //rowLabelValue('Total:', apsc['dof'] == null ? '∞' : '${apsc['dof']!.toStringAsFixed(2)} m'),
                                         ],
                                       ),
                                     ),
@@ -275,9 +292,12 @@ class _DepthOfFieldScreenState extends State<DepthOfFieldScreen> {
                                       padding: const EdgeInsets.all(8.0),
                                       child: Column(
                                         children: [
-                                          rowLabelValue('Desde:', '${full['near']?.toStringAsFixed(2)} m'),
-                                          rowLabelValue('Hasta:', '${full['far'] == double.infinity ? '∞' : '${full['far']?.toStringAsFixed(2)} m'}'),
-                                          rowLabelValue('Total:', '${full['dof'] == null ? '∞' : '${full['dof']!.toStringAsFixed(2)} m'}'),
+                                          rowLabelValue('Desde:', formatDistance(full['near']!)),
+                                          rowLabelValue('Hasta:', full['far'] == double.infinity ? '∞' : formatDistance(full['far']!)),
+                                          rowLabelValue('Total:', full['dof'] == null ? '∞' : formatDistance(full['dof']!)),
+                                          //rowLabelValue('Desde:', '${full['near']?.toStringAsFixed(2)} m'),
+                                          //rowLabelValue('Hasta:', '${full['far'] == double.infinity ? '∞' : '${full['far']?.toStringAsFixed(2)} m'}'),
+                                          //rowLabelValue('Total:', '${full['dof'] == null ? '∞' : '${full['dof']!.toStringAsFixed(2)} m'}'),
                                         ],
                                       ),
                                     ),

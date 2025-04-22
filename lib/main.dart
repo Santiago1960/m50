@@ -1,13 +1,13 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:m50/config/theme_data.dart';
 
-import 'config/router.dart';
+import 'config/router.dart';// 👈 importa tu tema cupertino
 
-void main() async{
-
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Pausar el primer frame hasta que estemos listos
   WidgetsBinding.instance.deferFirstFrame();
 
   await SystemChrome.setPreferredOrientations([
@@ -17,7 +17,6 @@ void main() async{
 
   runApp(const MainApp());
 
-  // Permitir que Flutter dibuje después de 2 segundos (o cuando tú digas)
   Future.delayed(const Duration(milliseconds: 500), () {
     WidgetsBinding.instance.allowFirstFrame();
   });
@@ -32,6 +31,13 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'M50',
       routerConfig: router,
+      builder: (context, child) {
+        // 👇 Aplicamos el CupertinoTheme a toda la app
+        return CupertinoTheme(
+          data: cupertinoAppTheme,
+          child: child ?? const SizedBox(),
+        );
+      },
     );
   }
 }
