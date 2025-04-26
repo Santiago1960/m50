@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -88,228 +89,231 @@ class _DepthOfFieldScreenState extends State<DepthOfFieldScreen> {
       };
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: context.canPop()
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => context.pop(),
-              )
-            : null,
-        centerTitle: true,
-        title: const Text('Profundidad de Campo', style: TextStyle(color: Colors.white)),
-      ),
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.grey.shade600,
-                Colors.grey.shade300,
-                Colors.grey.shade50,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    return ZoomIn(
+      duration: const Duration(milliseconds: 800),
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          leading: context.canPop()
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => context.go('/'),
+                )
+              : null,
+          centerTitle: true,
+          title: const Text('Profundidad de Campo', style: TextStyle(color: Colors.white)),
+        ),
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.grey.shade600,
+                  Colors.grey.shade300,
+                  Colors.grey.shade50,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Card(
-                    elevation: 3,
-                    margin: EdgeInsets.only(top: 20),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    color: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: const [
-                              Icon(Icons.center_focus_strong, color: Colors.black54),
-                              SizedBox(width: 8),
-                              Text(
-                                'Profundidad de Campo',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Card(
+                      elevation: 3,
+                      margin: EdgeInsets.only(top: 20),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: const [
+                                Icon(Icons.center_focus_strong, color: Colors.black54),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Profundidad de Campo',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            'La profundidad de campo es la porción de la imagen que aparece enfocada.\n'
-                            '\nComprenderla te permite controlar qué elementos salen nítidos y cuáles no.',
-                            style: TextStyle(fontSize: 14, height: 1.4),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  const Text('Distancia focal (mm)'),
-                  TextField(
-                    controller: focalController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  const Text('Distancia al sujeto (m)'),
-                  TextField(
-                    controller: distanceController,
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  const Text('Apertura (f/)'),
-                  GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context).unfocus();
-                      showAperturePicker();
-                    },
-                    child: AbsorbPointer(
-                      child: TextFormField(
-                        controller: apertureController,
-                        readOnly: true,
-                        decoration: const InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                              ],
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'La profundidad de campo es la porción de la imagen que aparece enfocada.\n'
+                              '\nComprenderla te permite controlar qué elementos salen nítidos y cuáles no.',
+                              style: TextStyle(fontSize: 14, height: 1.4),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  if (selectedAperture != null &&
-                      focalController.text.isNotEmpty &&
-                      distanceController.text.isNotEmpty)
-                    Builder(
-                      builder: (_) {
-                        final focal = double.tryParse(focalController.text);
-                        final distance = double.tryParse(distanceController.text.replaceAll(',', '.'));
-                        if (focal == null || distance == null) return const SizedBox.shrink();
-
-                        final apsc = calculateDepthOfField(
-                          focalLength: focal,
-                          aperture: selectedAperture!,
-                          subjectDistance: distance,
-                          coc: 0.019,
-                        );
-
-                        final full = calculateDepthOfField(
-                          focalLength: focal,
-                          aperture: selectedAperture!,
-                          subjectDistance: distance,
-                          coc: 0.030,
-                        );
-
-                        Widget rowLabelValue(String label, String value) => Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(label),
-                                Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
-                              ],
-                            );
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Rango de enfoque (APS-C y Full Frame)',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: 10),
-                            Table(
-                              border: TableBorder.all(),
-                              children: [
-                                const TableRow(
-                                  decoration: BoxDecoration(color: Colors.black54),
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.all(5.0),
-                                      child: Center(
-                                        child: Text(
-                                          'APS-C',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.all(5.0),
-                                      child: Center(
-                                        child: Text(
-                                          'Full Frame',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                TableRow(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        children: [
-                                          rowLabelValue('Desde:', formatDistance(apsc['near']!)),
-                                          rowLabelValue('Hasta:', apsc['far'] == double.infinity ? '∞' : formatDistance(apsc['far']!)),
-                                          rowLabelValue('Total:', apsc['dof'] == null ? '∞' : formatDistance(apsc['dof']!)),
-                                          //rowLabelValue('Desde:', '${apsc['near']?.toStringAsFixed(2)} m'),
-                                          //rowLabelValue('Hasta:', apsc['far'] == double.infinity ? '∞' : '${apsc['far']?.toStringAsFixed(2)} m'),
-                                          //rowLabelValue('Total:', apsc['dof'] == null ? '∞' : '${apsc['dof']!.toStringAsFixed(2)} m'),
-                                        ],
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        children: [
-                                          rowLabelValue('Desde:', formatDistance(full['near']!)),
-                                          rowLabelValue('Hasta:', full['far'] == double.infinity ? '∞' : formatDistance(full['far']!)),
-                                          rowLabelValue('Total:', full['dof'] == null ? '∞' : formatDistance(full['dof']!)),
-                                          //rowLabelValue('Desde:', '${full['near']?.toStringAsFixed(2)} m'),
-                                          //rowLabelValue('Hasta:', '${full['far'] == double.infinity ? '∞' : '${full['far']?.toStringAsFixed(2)} m'}'),
-                                          //rowLabelValue('Total:', '${full['dof'] == null ? '∞' : '${full['dof']!.toStringAsFixed(2)} m'}'),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              ],
-                            ),
-                          ],
-                        );
+      
+                    const SizedBox(height: 20),
+      
+                    const Text('Distancia focal (mm)'),
+                    TextField(
+                      controller: focalController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+      
+                    const SizedBox(height: 15),
+      
+                    const Text('Distancia al sujeto (m)'),
+                    TextField(
+                      controller: distanceController,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+      
+                    const SizedBox(height: 15),
+      
+                    const Text('Apertura (f/)'),
+                    GestureDetector(
+                      onTap: () {
+                        FocusScope.of(context).unfocus();
+                        showAperturePicker();
                       },
-                    )
-                ],
+                      child: AbsorbPointer(
+                        child: TextFormField(
+                          controller: apertureController,
+                          readOnly: true,
+                          decoration: const InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                          ),
+                        ),
+                      ),
+                    ),
+      
+                    const SizedBox(height: 20),
+      
+                    if (selectedAperture != null &&
+                        focalController.text.isNotEmpty &&
+                        distanceController.text.isNotEmpty)
+                      Builder(
+                        builder: (_) {
+                          final focal = double.tryParse(focalController.text);
+                          final distance = double.tryParse(distanceController.text.replaceAll(',', '.'));
+                          if (focal == null || distance == null) return const SizedBox.shrink();
+      
+                          final apsc = calculateDepthOfField(
+                            focalLength: focal,
+                            aperture: selectedAperture!,
+                            subjectDistance: distance,
+                            coc: 0.019,
+                          );
+      
+                          final full = calculateDepthOfField(
+                            focalLength: focal,
+                            aperture: selectedAperture!,
+                            subjectDistance: distance,
+                            coc: 0.030,
+                          );
+      
+                          Widget rowLabelValue(String label, String value) => Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(label),
+                                  Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                ],
+                              );
+      
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Rango de enfoque (APS-C y Full Frame)',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 10),
+                              Table(
+                                border: TableBorder.all(),
+                                children: [
+                                  const TableRow(
+                                    decoration: BoxDecoration(color: Colors.black54),
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsets.all(5.0),
+                                        child: Center(
+                                          child: Text(
+                                            'APS-C',
+                                            style: TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.all(5.0),
+                                        child: Center(
+                                          child: Text(
+                                            'Full Frame',
+                                            style: TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  TableRow(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          children: [
+                                            rowLabelValue('Desde:', formatDistance(apsc['near']!)),
+                                            rowLabelValue('Hasta:', apsc['far'] == double.infinity ? '∞' : formatDistance(apsc['far']!)),
+                                            rowLabelValue('Total:', apsc['dof'] == null ? '∞' : formatDistance(apsc['dof']!)),
+                                            //rowLabelValue('Desde:', '${apsc['near']?.toStringAsFixed(2)} m'),
+                                            //rowLabelValue('Hasta:', apsc['far'] == double.infinity ? '∞' : '${apsc['far']?.toStringAsFixed(2)} m'),
+                                            //rowLabelValue('Total:', apsc['dof'] == null ? '∞' : '${apsc['dof']!.toStringAsFixed(2)} m'),
+                                          ],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          children: [
+                                            rowLabelValue('Desde:', formatDistance(full['near']!)),
+                                            rowLabelValue('Hasta:', full['far'] == double.infinity ? '∞' : formatDistance(full['far']!)),
+                                            rowLabelValue('Total:', full['dof'] == null ? '∞' : formatDistance(full['dof']!)),
+                                            //rowLabelValue('Desde:', '${full['near']?.toStringAsFixed(2)} m'),
+                                            //rowLabelValue('Hasta:', '${full['far'] == double.infinity ? '∞' : '${full['far']?.toStringAsFixed(2)} m'}'),
+                                            //rowLabelValue('Total:', '${full['dof'] == null ? '∞' : '${full['dof']!.toStringAsFixed(2)} m'}'),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            ],
+                          );
+                        },
+                      )
+                  ],
+                ),
               ),
             ),
           ),

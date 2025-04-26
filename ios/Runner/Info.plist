@@ -43,5 +43,16 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<!-- App ID de AdMob para iOS: -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-1234567890123456~1234567890</string>
+	<key>SKAdNetworkItems</key>
+	<array>
+	<dict>
+		<key>SKAdNetworkIdentifier</key>
+		<string>cstr6suwn9.skadnetwork</string>
+	</dict>
+	<!-- …otros IDs según la guía de AdMob… -->
+	</array>
 </dict>
 </plist>

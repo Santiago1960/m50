@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:math';
 
+import 'package:m50/presentation/ads/ad_manager.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -79,7 +81,16 @@ class HomeScreen extends StatelessWidget {
               left: pos.dx,
               top: pos.dy,
               child: _buildIconButton(context,
-                  icon: data.icon, label: data.label, onTap: () => context.push(data.route)),
+                  icon: data.icon, label: data.label, onTap: () {
+                    AdManager.showInterstitial(
+                      onFinish: () {
+                        // Navegar a la ruta correspondiente
+                        AdManager.loadInterstitial();
+                        context.push(data.route);
+                      },
+                    );
+                  }
+              ),
             );
           }),
 

@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -360,319 +361,322 @@ class _CompensationScreenState extends State<CompensationScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: context.canPop()
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => context.pop(),
-              )
-            : null,
-        centerTitle: true,
-        title: const Text('Exposición', style: TextStyle(color: Colors.white)),
-      ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity, // ← Asegura que ocupe todo
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Colors.grey.shade600,
-              Colors.grey.shade300,
-              Colors.grey.shade50,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+    return ZoomIn(
+      duration: const Duration(milliseconds: 800),
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          leading: context.canPop()
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => context.go('/'),
+                )
+              : null,
+          centerTitle: true,
+          title: const Text('Exposición', style: TextStyle(color: Colors.white)),
         ),
-        child: SingleChildScrollView( // ← permite expandir si se necesita
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 25),
-            child: Column(
-              children: [
-                Card(
-                  elevation: 3,
-                  margin: EdgeInsets.only(top: 20),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  color: Colors.white,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.exposure, color: Colors.black54),
-
-                            SizedBox(width: 8),
-
-                            Text(
-                              'Exposición Base',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+        body: Container(
+          width: double.infinity,
+          height: double.infinity, // ← Asegura que ocupe todo
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.grey.shade600,
+                Colors.grey.shade300,
+                Colors.grey.shade50,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: SingleChildScrollView( // ← permite expandir si se necesita
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 25),
+              child: Column(
+                children: [
+                  Card(
+                    elevation: 3,
+                    margin: EdgeInsets.only(top: 20),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.exposure, color: Colors.black54),
+      
+                              SizedBox(width: 8),
+      
+                              Text(
+                                'Exposición Base',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
+      
+                              SizedBox(width: 35),
+      
+                              ev != 0
+                                  ? Text(
+                                      'EV: ${ev.toStringAsFixed(6)}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black54,
+                                      ),
+                                    )
+                                  : Container(),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Ingresa los valores de apertura, velocidad e ISO que te proporciona el exposímetro. Asegúrate que la exposición es correcta y fíjala.\n\nPara obtener una exposición compensada, bloquea el candado de una variable y modifica cualquiera de las otras dos.',
+                            style: TextStyle(fontSize: 14, height: 1.4),
+                          ),
+      
+                          const SizedBox(height: 20),
+                          
+                          const Text(
+                            'Apertura (f/)',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
                             ),
-
-                            SizedBox(width: 35),
-
-                            ev != 0
-                                ? Text(
-                                    'EV: ${ev.toStringAsFixed(6)}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black54,
+                          ),
+      
+                          const SizedBox(height: 8),
+      
+                          Row(
+                            children: [
+      
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    apertureLocked
+                                        ? null
+                                        : showAperturePicker();
+                                  },
+                                  child: AbsorbPointer(
+                                    child: TextFormField(
+                                      decoration: InputDecoration(
+                                        //labelText: 'Apertura (f/)',
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                                          borderSide: BorderSide(color: Colors.grey),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                                          borderSide: BorderSide(color: Colors.black),
+                                        ),
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                      ),
+                                      controller: apertureController,
                                     ),
-                                  )
+                                  ),
+                                ),
+                              ),
+      
+                              SizedBox(width: 20),
+      
+                              ev != 0
+                                ? GestureDetector(
+                                  onTap: () {
+                                    apertureLocked = !apertureLocked;
+                                    if (apertureLocked) {
+                                      speedLocked = false;
+                                      isoLocked = false;
+                                    }
+                                    setState(() {});
+                                  },
+                                  child: apertureLocked
+                                      ? Icon(Icons.lock_rounded, color: Colors.red[900])
+                                      : Icon(Icons.lock_open_rounded, color: Colors.black54),
+                                )
                                 : Container(),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Ingresa los valores de apertura, velocidad e ISO que te proporciona el exposímetro. Asegúrate que la exposición es correcta y fíjala.\n\nPara obtener una exposición compensada, bloquea el candado de una variable y modifica cualquiera de las otras dos.',
-                          style: TextStyle(fontSize: 14, height: 1.4),
-                        ),
-
-                        const SizedBox(height: 20),
-                        
-                        const Text(
-                          'Apertura (f/)',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
+                            ],
                           ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Row(
-                          children: [
-
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  apertureLocked
-                                      ? null
-                                      : showAperturePicker();
-                                },
-                                child: AbsorbPointer(
-                                  child: TextFormField(
-                                    decoration: InputDecoration(
-                                      //labelText: 'Apertura (f/)',
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+      
+                          SizedBox(height: 20),
+      
+                          const Text(
+                            'Velocidad',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
+                          ),
+      
+                          const SizedBox(height: 8),
+                          
+                          Row(
+                            children: [
+      
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    speedLocked
+                                        ? null
+                                        : showSpeedPicker();
+                                  },
+                                  child: AbsorbPointer(
+                                    child: TextFormField(
+                                      decoration: InputDecoration(
+                                        //labelText: 'Velocidad',
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                                          borderSide: BorderSide(color: Colors.grey),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                                          borderSide: BorderSide(color: Colors.black),
+                                        ),
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                                       ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                                        borderSide: BorderSide(color: Colors.grey),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                                        borderSide: BorderSide(color: Colors.black),
-                                      ),
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                      controller: speedController,
                                     ),
-                                    controller: apertureController,
                                   ),
                                 ),
                               ),
-                            ),
-
-                            SizedBox(width: 20),
-
-                            ev != 0
-                              ? GestureDetector(
-                                onTap: () {
-                                  apertureLocked = !apertureLocked;
-                                  if (apertureLocked) {
-                                    speedLocked = false;
-                                    isoLocked = false;
-                                  }
-                                  setState(() {});
-                                },
-                                child: apertureLocked
-                                    ? Icon(Icons.lock_rounded, color: Colors.red[900])
-                                    : Icon(Icons.lock_open_rounded, color: Colors.black54),
-                              )
-                              : Container(),
-                          ],
-                        ),
-
-                        SizedBox(height: 20),
-
-                        const Text(
-                          'Velocidad',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
+      
+                              SizedBox(width: 20),
+      
+                              ev != 0
+                                ? GestureDetector(
+                                  onTap: () {
+                                    speedLocked = !speedLocked;
+                                    if (speedLocked) {
+                                      apertureLocked = false;
+                                      isoLocked = false;
+                                    }
+                                    setState(() {});
+                                  },
+                                  child: speedLocked
+                                      ? Icon(Icons.lock_rounded, color: Colors.red[900])
+                                      : Icon(Icons.lock_open_rounded, color: Colors.black54),
+                                )
+                                : Container(),
+                            ],
                           ),
-                        ),
-
-                        const SizedBox(height: 8),
-                        
-                        Row(
-                          children: [
-
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  speedLocked
-                                      ? null
-                                      : showSpeedPicker();
-                                },
-                                child: AbsorbPointer(
-                                  child: TextFormField(
-                                    decoration: InputDecoration(
-                                      //labelText: 'Velocidad',
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+      
+                          SizedBox(height: 20),
+      
+                          const Text(
+                            'ISO',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
+                          ),
+      
+                          const SizedBox(height: 2),
+      
+                          Row(
+                            children: [
+      
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    isoLocked
+                                        ? null
+                                        : showIsoPicker();
+                                  },
+                                  child: AbsorbPointer(
+                                    child: TextFormField(
+                                      decoration: InputDecoration(
+                                        //labelText: 'ISO',
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                                          borderSide: BorderSide(color: Colors.grey),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                                          borderSide: BorderSide(color: Colors.black),
+                                        ),
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                                       ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                                        borderSide: BorderSide(color: Colors.grey),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                                        borderSide: BorderSide(color: Colors.black),
-                                      ),
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                      controller: isoController,
                                     ),
-                                    controller: speedController,
                                   ),
                                 ),
                               ),
-                            ),
-
-                            SizedBox(width: 20),
-
-                            ev != 0
-                              ? GestureDetector(
-                                onTap: () {
-                                  speedLocked = !speedLocked;
-                                  if (speedLocked) {
-                                    apertureLocked = false;
-                                    isoLocked = false;
-                                  }
-                                  setState(() {});
-                                },
-                                child: speedLocked
-                                    ? Icon(Icons.lock_rounded, color: Colors.red[900])
-                                    : Icon(Icons.lock_open_rounded, color: Colors.black54),
-                              )
-                              : Container(),
-                          ],
-                        ),
-
-                        SizedBox(height: 20),
-
-                        const Text(
-                          'ISO',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
+      
+                              SizedBox(width: 20),
+      
+                              ev != 0
+                                ? GestureDetector(
+                                  onTap: () {
+                                    isoLocked = !isoLocked;
+                                    if (isoLocked) {
+                                      apertureLocked = false;
+                                      speedLocked = false;
+                                    }
+                                    setState(() {});
+                                  },
+                                  child: isoLocked
+                                      ? Icon(Icons.lock_rounded, color: Colors.red[900])
+                                      : Icon(Icons.lock_open_rounded, color: Colors.black54),
+                                )
+                                : Container(),
+                            ],
                           ),
-                        ),
-
-                        const SizedBox(height: 2),
-
-                        Row(
-                          children: [
-
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  isoLocked
-                                      ? null
-                                      : showIsoPicker();
-                                },
-                                child: AbsorbPointer(
-                                  child: TextFormField(
-                                    decoration: InputDecoration(
-                                      //labelText: 'ISO',
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                                        borderSide: BorderSide(color: Colors.grey),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                                        borderSide: BorderSide(color: Colors.black),
-                                      ),
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                                    ),
-                                    controller: isoController,
-                                  ),
+      
+                          SizedBox(height: 20),
+      
+                          // Botón para fijar la exposición
+                          Center(
+                            child: ElevatedButton(
+                              onPressed: (apertureLocked || speedLocked || isoLocked)
+                                ? null
+                                : () {
+                                    setState(() {
+                                      ev = evFrom(selectedAperture!, selectedSpeedValue!, selectedISO!);
+                                    });
+                                  },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
+                              child: const Text('Fijar exposición', style: TextStyle(color: Colors.white)),
                             ),
-
-                            SizedBox(width: 20),
-
-                            ev != 0
-                              ? GestureDetector(
-                                onTap: () {
-                                  isoLocked = !isoLocked;
-                                  if (isoLocked) {
-                                    apertureLocked = false;
-                                    speedLocked = false;
-                                  }
-                                  setState(() {});
-                                },
-                                child: isoLocked
-                                    ? Icon(Icons.lock_rounded, color: Colors.red[900])
-                                    : Icon(Icons.lock_open_rounded, color: Colors.black54),
-                              )
-                              : Container(),
-                          ],
-                        ),
-
-                        SizedBox(height: 20),
-
-                        // Botón para fijar la exposición
-                        Center(
-                          child: ElevatedButton(
-                            onPressed: (apertureLocked || speedLocked || isoLocked)
-                              ? null
-                              : () {
-                                  setState(() {
-                                    ev = evFrom(selectedAperture!, selectedSpeedValue!, selectedISO!);
-                                  });
-                                },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text('Fijar exposición', style: TextStyle(color: Colors.white)),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-
-                  SizedBox(height: 20),
-
-                  Text(
-                    '* Válido para cámaras Canon M50 MarkII y Canon APS-C en general',
-                    style: TextStyle(fontSize: 10),
-                  ),
-              ],
+      
+                    SizedBox(height: 20),
+      
+                    Text(
+                      '* Válido para cámaras Canon M50 MarkII y Canon APS-C en general',
+                      style: TextStyle(fontSize: 10),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
