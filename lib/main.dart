@@ -36,6 +36,19 @@ class MainApp extends StatelessWidget {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'M50',
+      theme: ThemeData(
+        useMaterial3: false, // Para evitar que Material 3 cambie los colores automáticamente
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          iconTheme: IconThemeData(color: Colors.white),
+        ),
+      ),
       routerConfig: router,
       builder: (context, child) {
         // 👇 Aplicamos el CupertinoTheme a toda la app

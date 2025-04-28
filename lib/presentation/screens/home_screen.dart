@@ -11,18 +11,19 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final Size screenSize = MediaQuery.of(context).size;
     final double radius = 130;
-    final Offset center = Offset(screenSize.width / 2, screenSize.height / 2 - 60);
+    final Offset center = Offset(screenSize.width / 2, screenSize.height / 2);
 
     final List<_RadialIconData> icons = [
       _RadialIconData(icon: Icons.center_focus_strong, label: 'Hyperfocal', angle: 0, route: '/hyperfocal'),
       _RadialIconData(icon: Icons.blur_on, label: 'DoF', angle: 45, route: '/dof'),
       _RadialIconData(icon: Icons.exposure, label: 'Exposición', angle: 90, route: '/compensation'),
       _RadialIconData(icon: Icons.tonality, label: 'Blancos', angle: 135, route: '/whitebalance'),
+      _RadialIconData(icon: null, label: 'M50', angle: 262, route: ''),
     ];
 
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+      //backgroundColor: Colors.black,
+      /* appBar: AppBar(
         backgroundColor: Colors.black,
         centerTitle: true,
         title: const Text(
@@ -35,9 +36,10 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         elevation: 0,
-      ),
+      ), */
       body: Stack(
         children: [
+
           // Fondo degradado
           Container(
             width: double.infinity,
@@ -55,6 +57,17 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
+          Positioned(
+            top: 40, // Ajusta según tu barra de estado
+            right: 20,
+            child: IconButton(
+              icon: const Icon(Icons.settings, color: Colors.black87, size: 30),
+              onPressed: () {
+                _showSettingsMenu(context);
+              },
+            ),
+          ),
+
           // Círculo guía sutil
           Positioned(
             left: center.dx - radius,
@@ -69,7 +82,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // Íconos distribuidos alrededor del círculo
+          // Íconos y textos distribuidos alrededor del círculo
           ...icons.map((data) {
             final double rad = data.angle * pi / 180;
             final Offset pos = Offset(
@@ -80,17 +93,28 @@ class HomeScreen extends StatelessWidget {
             return Positioned(
               left: pos.dx,
               top: pos.dy,
-              child: _buildIconButton(context,
-                  icon: data.icon, label: data.label, onTap: () {
-                    AdManager.showInterstitial(
-                      onFinish: () {
-                        // Navegar a la ruta correspondiente
-                        AdManager.loadInterstitial();
-                        context.push(data.route);
+              child: data.icon == null
+                  ? Text(
+                      data.label,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 50,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  : _buildIconButton(
+                      context,
+                      icon: data.icon!,
+                      label: data.label,
+                      onTap: () {
+                        AdManager.showInterstitial(
+                          onFinish: () {
+                            AdManager.loadInterstitial();
+                            context.push(data.route);
+                          },
+                        );
                       },
-                    );
-                  }
-              ),
+                    ),
             );
           }),
 
@@ -147,7 +171,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _RadialIconData {
-  final IconData icon;
+  final IconData? icon;
   final String label;
   final double angle; // en grados
   final String route;
@@ -158,4 +182,44 @@ class _RadialIconData {
     required this.angle,
     required this.route,
   });
+}
+
+void _showSettingsMenu(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.block),
+            title: const Text('Bloquear anuncios'),
+            onTap: () {
+              Navigator.pop(context);
+              // Aquí navegas o abres proceso de pago de bloqueo de anuncios
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.blur_on),
+            title: const Text('Desbloquear DOF'),
+            onTap: () {
+              Navigator.pop(context);
+              // Aquí navegas o abres proceso de pago de desbloqueo DOF
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('Información'),
+            onTap: () {
+              Navigator.pop(context);
+              // Aquí muestras info sobre la app
+            },
+          ),
+        ],
+      );
+    },
+  );
 }

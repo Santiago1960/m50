@@ -23,7 +23,6 @@ class WhiteBalanceScreen extends StatelessWidget {
       duration: Duration(milliseconds: 800),
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.black,
           leading: context.canPop()
               ? IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
