@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 import 'package:m50/config/theme_data.dart';
 import 'package:m50/presentation/ads/ad_manager.dart';
@@ -10,6 +12,9 @@ import 'config/router.dart';// 👈 importa tu tema cupertino
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final bool billingAvailable = await InAppPurchase.instance.isAvailable();
+  print('Billing disponible: $billingAvailable');
 
   MobileAds.instance.initialize();
   AdManager.loadInterstitial();
@@ -21,7 +26,9 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(const MainApp());
+  runApp(
+    const ProviderScope(child: MainApp()),
+  );
 
   Future.delayed(const Duration(milliseconds: 500), () {
     WidgetsBinding.instance.allowFirstFrame();

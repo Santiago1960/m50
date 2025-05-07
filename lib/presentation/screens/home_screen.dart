@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'dart:math';
 
 import 'package:m50/presentation/ads/ad_manager.dart';
+import 'package:m50/providers/product_list_provider.dart';
+import 'package:m50/providers/purchase_controller_provider.dart';
+import 'package:m50/providers/purchase_state_provider.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+
     final Size screenSize = MediaQuery.of(context).size;
     final double radius = 130;
     final Offset center = Offset(screenSize.width / 2, screenSize.height / 2);
+
+    final products = ref.watch(productListProvider);
+    final purchaseState = ref.watch(purchaseStateProvider);
+
+    print('Productos disponibles: ${products.map((e) => e.id).toList()}');
+    print('Estado de compra: ${purchaseState.adsRemoved}, ${purchaseState.dofUnlocked}');
 
     final List<_RadialIconData> icons = [
       _RadialIconData(icon: Icons.center_focus_strong, label: 'Hyperfocal', angle: 0, route: '/hyperfocal'),
@@ -22,21 +34,7 @@ class HomeScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      //backgroundColor: Colors.black,
-      /* appBar: AppBar(
-        backgroundColor: Colors.black,
-        centerTitle: true,
-        title: const Text(
-          'M50',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
-        ),
-        elevation: 0,
-      ), */
+
       body: Stack(
         children: [
 
@@ -63,7 +61,7 @@ class HomeScreen extends StatelessWidget {
             child: IconButton(
               icon: const Icon(Icons.settings, color: Colors.black87, size: 30),
               onPressed: () {
-                _showSettingsMenu(context);
+                _showSettingsMenu(context, ref);
               },
             ),
           ),
@@ -184,7 +182,87 @@ class _RadialIconData {
   });
 }
 
-void _showSettingsMenu(BuildContext context) {
+void _showSettingsMenu(BuildContext context, WidgetRef ref) {
+
+  final products = ref.watch(productListProvider);
+  final purchaseState = ref.watch(purchaseStateProvider);
+
+  final List<Widget> widgets = [];
+
+  // Producto: remove_ads
+  if (!purchaseState.adsRemoved) {
+    ProductDetails? removeAdsProduct;
+    try {
+      removeAdsProduct = products.firstWhere((p) => p.id == 'remove_ads');
+    } catch (_) {
+      removeAdsProduct = null;
+    }
+
+    widgets.add(
+      GestureDetector(
+        onTap: () {
+          if (removeAdsProduct != null) {
+            ref.read(purchaseControllerProvider).buy(removeAdsProduct);
+            Navigator.pop(context);
+          }
+        },
+        child: ListTile(
+          leading: const Icon(Icons.block),
+          title: Text(
+            removeAdsProduct != null
+                ? 'Eliminar anuncios (${removeAdsProduct.price})'
+                : 'Eliminar anuncios',
+          ),
+          subtitle: const Text('Compra para eliminar anuncios'),
+          trailing: const Icon(Icons.arrow_forward_ios),
+        ),
+      ),
+    );
+  }
+
+  // Producto: unlock_dof
+  if (!purchaseState.dofUnlocked) {
+    ProductDetails? unlockDofProduct;
+    try {
+      unlockDofProduct = products.firstWhere((p) => p.id == 'unlock_dof');
+    } catch (_) {
+      unlockDofProduct = null;
+    }
+
+    widgets.add(
+      GestureDetector(
+        onTap: () {
+          if (unlockDofProduct != null) {
+            ref.read(purchaseControllerProvider).buy(unlockDofProduct);
+            Navigator.pop(context);
+          }
+        },
+        child: ListTile(
+          leading: const Icon(Icons.blur_on),
+          title: Text(
+            unlockDofProduct != null
+                ? 'Desbloquear DOF (${unlockDofProduct.price})'
+                : 'Desbloquear DOF',
+          ),
+          subtitle: const Text('Activa la herramienta de profundidad de campo'),
+          trailing: const Icon(Icons.arrow_forward_ios),
+        ),
+      ),
+    );
+  }
+
+  // Información general
+  widgets.add(
+    ListTile(
+      leading: const Icon(Icons.info_outline),
+      title: const Text('Información'),
+      onTap: () {
+        Navigator.pop(context);
+        // Aquí muestras info sobre la app
+      },
+    ),
+  );
+
   showModalBottomSheet(
     context: context,
     shape: const RoundedRectangleBorder(
@@ -193,32 +271,7 @@ void _showSettingsMenu(BuildContext context) {
     builder: (context) {
       return Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.block),
-            title: const Text('Bloquear anuncios'),
-            onTap: () {
-              Navigator.pop(context);
-              // Aquí navegas o abres proceso de pago de bloqueo de anuncios
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.blur_on),
-            title: const Text('Desbloquear DOF'),
-            onTap: () {
-              Navigator.pop(context);
-              // Aquí navegas o abres proceso de pago de desbloqueo DOF
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('Información'),
-            onTap: () {
-              Navigator.pop(context);
-              // Aquí muestras info sobre la app
-            },
-          ),
-        ],
+        children: widgets,
       );
     },
   );
