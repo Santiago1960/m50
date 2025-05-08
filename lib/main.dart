@@ -7,6 +7,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 
 import 'package:m50/config/theme_data.dart';
 import 'package:m50/presentation/ads/ad_manager.dart';
+import 'package:m50/providers/purchase_controller_provider.dart';
 
 import 'config/router.dart';// 👈 importa tu tema cupertino
 
@@ -35,8 +36,24 @@ void main() async {
   });
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerStatefulWidget {
   const MainApp({super.key});
+
+  @override
+  ConsumerState<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends ConsumerState<MainApp> {
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Restaurar compras al iniciar la app
+    Future.microtask(() {
+      ref.read(purchaseControllerProvider).verifyPastPurchases();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

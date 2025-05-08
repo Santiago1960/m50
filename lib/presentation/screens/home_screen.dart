@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +10,7 @@ import 'package:m50/presentation/ads/ad_manager.dart';
 import 'package:m50/providers/product_list_provider.dart';
 import 'package:m50/providers/purchase_controller_provider.dart';
 import 'package:m50/providers/purchase_state_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -104,13 +107,55 @@ class HomeScreen extends ConsumerWidget {
                       context,
                       icon: data.icon!,
                       label: data.label,
-                      onTap: () {
-                        AdManager.showInterstitial(
-                          onFinish: () {
-                            AdManager.loadInterstitial();
-                            context.push(data.route);
-                          },
-                        );
+
+                      onTap: () async {
+                        // Si el icono es "DoF", verifica si la compra está desbloqueada
+                        if (data.label == 'DoF' && !purchaseState.dofUnlocked) {
+                          if (purchaseState.dofTrialRemaining > 0) {
+                            await showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Función limitada'),
+                                content: Text('Esta función es de pago. Puedes probarla gratis 5 veces.\n\nTe quedan ${purchaseState.dofTrialRemaining} usos.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('Entendido'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if(!purchaseState.adsRemoved || !purchaseState.dofUnlocked) {
+                              AdManager.showInterstitial(
+                                onFinish: () {
+                                  AdManager.loadInterstitial();
+                                  context.push(data.route);
+                                },
+                              );
+                            } else {
+                              if(context.mounted) {
+                                context.push(data.route);
+                              }
+                            }
+                            //ref.read(purchaseStateProvider.notifier).consumeDOFTrial();
+                          } else {
+                            await showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Acceso restringido'),
+                                content: const Text('Has agotado las 5 pruebas gratuitas.\n\nPuedes desbloquear la función DOF desde el menú de configuración.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('Cerrar'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            return;
+                          }
+                        }
                       },
                     ),
             );
@@ -244,7 +289,9 @@ void _showSettingsMenu(BuildContext context, WidgetRef ref) {
                 ? 'Desbloquear DOF (${unlockDofProduct.price})'
                 : 'Desbloquear DOF',
           ),
-          subtitle: const Text('Activa la herramienta de profundidad de campo'),
+          subtitle: !purchaseState.dofUnlocked
+            ? Text('Activa la herramienta de profundidad de campo y elimina la publicidad')
+            : Text('Activa la herramienta de profundidad de campo'),
           trailing: const Icon(Icons.arrow_forward_ios),
         ),
       ),
@@ -256,12 +303,61 @@ void _showSettingsMenu(BuildContext context, WidgetRef ref) {
     ListTile(
       leading: const Icon(Icons.info_outline),
       title: const Text('Información'),
-      onTap: () {
+      onTap: () async {
         Navigator.pop(context);
         // Aquí muestras info sobre la app
+        final url = Uri.parse('https://sites.google.com/view/m50-app'); // Tu URL de Google Sites
+
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url, mode: LaunchMode.externalApplication); // Abre en navegador
+        } else {
+          // Mostrar un error o Snackbar
+          if(context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No se pudo abrir el enlace')),
+            );
+          }
+        }
       },
     ),
   );
+
+  if (Platform.isIOS &&
+    !purchaseState.adsRemoved &&
+    !purchaseState.dofUnlocked) {
+    widgets.add(
+      ListTile(
+        leading: const Icon(Icons.restore),
+        title: const Text('Restaurar compras'),
+        onTap: () async {
+          await ref.read(purchaseControllerProvider).verifyPastPurchases();
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Se han restaurado las compras')),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  widgets.add(
+    ListTile(
+      leading: const Icon(Icons.restore),
+      title: const Text('REINICIAR COMPRAS (PRUEBAS)'),
+      onTap: () async {
+        await ref.read(purchaseStateProvider.notifier).resetPurchases();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Se han reiniciado las compras')),
+          );
+          Navigator.pop(context);
+        }
+      },
+    ),
+  );
+
+  widgets.add(SizedBox(height: 20));
 
   showModalBottomSheet(
     context: context,

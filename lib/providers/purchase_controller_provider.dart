@@ -71,4 +71,10 @@ class PurchaseController {
         break;
     }
   }
+
+  Future<void> verifyPastPurchases() async {
+    await _inAppPurchase.restorePurchases();
+    // Las compras restauradas llegarán automáticamente a través del purchaseStream,
+    // y se manejarán en _onPurchaseUpdated()
+  }
 }

@@ -1,18 +1,22 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:m50/providers/purchase_state_provider.dart';
 
 import '../widgets/pickers/widgets.dart';
 
-class DepthOfFieldScreen extends StatefulWidget {
+class DepthOfFieldScreen extends ConsumerStatefulWidget {
   const DepthOfFieldScreen({super.key});
 
   @override
-  State<DepthOfFieldScreen> createState() => _DepthOfFieldScreenState();
+  ConsumerState<DepthOfFieldScreen> createState() => _DepthOfFieldScreenState();
 }
 
-class _DepthOfFieldScreenState extends State<DepthOfFieldScreen> {
+class _DepthOfFieldScreenState extends ConsumerState<DepthOfFieldScreen> {
+
   double? selectedAperture = 5.6;
+  bool hasConsumedTrial = false;
   final TextEditingController focalController = TextEditingController();
   final TextEditingController distanceController = TextEditingController();
   final TextEditingController apertureController = TextEditingController();
@@ -27,6 +31,7 @@ class _DepthOfFieldScreenState extends State<DepthOfFieldScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     const List<double> apertures = [
       22.0, 20.0, 18.0, 16.0, 14.0, 13.0,
       11.0, 10.0, 9.0, 8.0, 7.1, 6.3, 5.6,
@@ -232,6 +237,11 @@ class _DepthOfFieldScreenState extends State<DepthOfFieldScreen> {
                             subjectDistance: distance,
                             coc: 0.030,
                           );
+
+                          if(!hasConsumedTrial) {
+                            ref.read(purchaseStateProvider.notifier).consumeDOFTrial();
+                            hasConsumedTrial = true;
+                          }
       
                           Widget rowLabelValue(String label, String value) => Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
