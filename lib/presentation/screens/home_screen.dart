@@ -155,6 +155,19 @@ class HomeScreen extends ConsumerWidget {
                             );
                             return;
                           }
+                        } else {
+                          if(!purchaseState.adsRemoved || !purchaseState.dofUnlocked) {
+                              AdManager.showInterstitial(
+                                onFinish: () {
+                                  AdManager.loadInterstitial();
+                                  context.push(data.route);
+                                },
+                              );
+                            } else {
+                              if(context.mounted) {
+                                context.push(data.route);
+                              }
+                            }
                         }
                       },
                     ),
