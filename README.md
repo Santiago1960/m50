@@ -39,4 +39,10 @@ En el menú izquierdo Pruebas -> Prueba Interna
 Crear nueva versión
 Carga el bundle y Guardar
 En la sección Testers, copia y envía el enlace.
+
+# PARA ACTUALIZAR EN APPLE STORE        
 ```
+Asegúrate de la versión en pubspec.yaml
+Generamos un nuevo ipa -> flutter build ipa --release
+Lo cargamos desde /build/ios/ipa/m50.ipa a la aplicación transporter de macOS.
+Recibimos una confirmación en la misma aplicación

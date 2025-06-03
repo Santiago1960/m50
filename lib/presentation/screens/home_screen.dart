@@ -354,7 +354,7 @@ void _showSettingsMenu(BuildContext context, WidgetRef ref) {
     );
   }
 
-  widgets.add(
+  /* widgets.add(
     ListTile(
       leading: const Icon(Icons.restore),
       title: const Text('REINICIAR COMPRAS (PRUEBAS)'),
@@ -368,7 +368,7 @@ void _showSettingsMenu(BuildContext context, WidgetRef ref) {
         }
       },
     ),
-  );
+  ); */
 
   widgets.add(SizedBox(height: 20));
 

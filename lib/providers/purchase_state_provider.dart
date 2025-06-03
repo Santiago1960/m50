@@ -64,14 +64,14 @@ class PurchaseStateNotifier extends StateNotifier<PurchaseState> {
   }
 
   //! SOLO PARA PRUEBAS. Restaura las compras
-  Future<void> resetPurchases() async {
+  /* Future<void> resetPurchases() async {
     final prefs = await SharedPreferences.getInstance();
     //await prefs.setBool('adsRemoved', true);
     await prefs.remove('adsRemoved');
     await prefs.remove('dofUnlocked');
     await prefs.setInt('dofTrialRemaining', 5);
     state = const PurchaseState(adsRemoved: false, dofUnlocked: false, dofTrialRemaining: 5);
-  }
+  } */
 }
 
 final purchaseStateProvider = StateNotifierProvider<PurchaseStateNotifier, PurchaseState>(
