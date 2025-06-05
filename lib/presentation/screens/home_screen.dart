@@ -126,7 +126,7 @@ class HomeScreen extends ConsumerWidget {
                               ),
                             );
 
-                            if(!purchaseState.adsRemoved || !purchaseState.dofUnlocked) {
+                            if(!purchaseState.adsRemoved && !purchaseState.dofUnlocked) {
                               AdManager.showInterstitial(
                                 onFinish: () {
                                   AdManager.loadInterstitial();
@@ -156,7 +156,7 @@ class HomeScreen extends ConsumerWidget {
                             return;
                           }
                         } else {
-                          if(!purchaseState.adsRemoved || !purchaseState.dofUnlocked) {
+                          if(!purchaseState.adsRemoved && !purchaseState.dofUnlocked) {
                               AdManager.showInterstitial(
                                 onFinish: () {
                                   AdManager.loadInterstitial();

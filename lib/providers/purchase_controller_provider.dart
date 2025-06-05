@@ -35,6 +35,9 @@ class PurchaseController {
       onDone: () => _subscription.cancel(),
       onError: (error) => print('Error en compra: $error'),
     );
+
+    /// Verificamos si ya tiene compras
+    await verifyPastPurchases();
   }
 
   void dispose() {
