@@ -1,0 +1,12 @@
+h1, h2 {
+    text-align: center;
+}
+
+.justify {
+    text-align: justify;
+}
+
+.lista-asterisco li::marker {
+  content: "* ";
+  color: red; /* o cualquier otro color */
+}
